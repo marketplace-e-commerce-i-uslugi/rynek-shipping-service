@@ -2,7 +2,7 @@
 
 `shipping-service` — dostawa
 
-> Status: **szkielet**. Wszystkie endpointy z tabeli istnieją w kontrolerach (`src/main/java/.../api/`) i zwracają `501 Not Implemented` (RFC 7807). Ciała żądań to puste rekordy w `api/dto/`.
+> Status: **cennik i punkty odbioru działają** (bez integracji z przewoźnikiem, bez bazy). Metody: Paczkomat InPost 12,99 zł, Kurier 15,99 zł, Odbiór osobisty 0 zł, cena za paczkę od jednego sprzedawcy. Punkty odbioru to stała lista przykładowych paczkomatów w kilku miastach (`rates/Carriers`), do zastąpienia API InPost za interfejsem `CarrierProvider`. Przesyłki, etykiety, śledzenie i webhooki zwracają `501 Not Implemented`.
 
 ## Uruchomienie
 
@@ -24,6 +24,8 @@ Ekrany: 4 Karta oferty (koszt dostawy), 8 Koszyk. Integracje z przewoźnikami (n
 |---|---|---|---|
 | GET | `/api/v1/shipping/methods?offerIds=&postalCode=` | Metody i ceny dostawy dla pozycji | pub |
 | GET | `/api/v1/shipping/pickup-points?lat=&lng=&city=` | Punkty odbioru (paczkomaty) | pub |
+| GET | `/internal/shipping/methods/{methodId}` | Metoda i cena (koszyk, zamówienie) | int |
+| GET | `/internal/shipping/pickup-points/{pointId}` | Dane punktu do zapisania w zamówieniu | int |
 | POST | `/api/v1/shipping/shipments` | Utworzenie przesyłki i etykiety | seller |
 | GET | `/api/v1/shipping/shipments/{shipmentId}/label` | Etykieta do wydruku | seller |
 | GET | `/api/v1/shipping/shipments/{shipmentId}/tracking` | Śledzenie przesyłki | user / seller |

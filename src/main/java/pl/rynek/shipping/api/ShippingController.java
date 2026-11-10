@@ -7,26 +7,37 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pl.rynek.shipping.api.dto.CreateShipmentRequest;
+import pl.rynek.shipping.rates.Carriers;
+import pl.rynek.shipping.rates.PickupPoint;
+import pl.rynek.shipping.rates.ShippingMethod;
+
+import java.util.List;
 
 import static pl.rynek.shipping.common.NotImplemented.notImplemented;
 
 @RestController
 public class ShippingController {
 
-    /**
-     * Metody i ceny dostawy dla pozycji. Dostęp: pub.
-     */
-    @GetMapping("/api/v1/shipping/methods")
-    public void listShippingMethods(@RequestParam(required = false) String offerIds, @RequestParam(required = false) String postalCode) {
-        throw notImplemented();
+    private final Carriers carriers;
+
+    public ShippingController(Carriers carriers) {
+        this.carriers = carriers;
     }
 
     /**
-     * Punkty odbioru (paczkomaty). Dostęp: pub.
+     * Metody i ceny dostawy dla pozycji. Dostęp: pub. Na razie cennik nie zależy od ofert ani kodu pocztowego.
+     */
+    @GetMapping("/api/v1/shipping/methods")
+    public List<ShippingMethod> listShippingMethods(@RequestParam(required = false) String offerIds, @RequestParam(required = false) String postalCode) {
+        return carriers.methods();
+    }
+
+    /**
+     * Punkty odbioru (paczkomaty). Dostęp: pub. Najbliższe 10 od współrzędnych albo w mieście.
      */
     @GetMapping("/api/v1/shipping/pickup-points")
-    public void listPickupPoints(@RequestParam(required = false) String lat, @RequestParam(required = false) String lng, @RequestParam(required = false) String city) {
-        throw notImplemented();
+    public List<PickupPoint> listPickupPoints(@RequestParam(required = false) Double lat, @RequestParam(required = false) Double lng, @RequestParam(required = false) String city) {
+        return carriers.points(lat, lng, city);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 Mikroserwis platformy **Rynek**: `shipping-service` — dostawa
 
-Zakres, endpointy i zdarzenia są opisane w `README.md`. Na razie to szkielet: endpointy zwracają 501, DTO są puste. Nie dodawaj logiki bez wyraźnej prośby.
+Zakres, endpointy i zdarzenia są opisane w `README.md`. Działają metody dostawy i punkty odbioru ze stałego cennika (`rates.Carriers`, bez bazy i bez przewoźnika); przesyłki, etykiety, śledzenie i webhooki zwracają 501. Nie dodawaj logiki bez wyraźnej prośby.
 
 ## Wspólne konwencje API (§1 dokumentu architektury)
 
