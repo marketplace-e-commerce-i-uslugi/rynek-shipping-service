@@ -4,6 +4,34 @@ spring:
   mvc:
     problemdetails:
       enabled: true
+  datasource:
+    # Lokalnie: rynek-infra/local (docker compose). Inne środowiska ustawiają zmienne.
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/shipping}
+    username: ${DB_USER:shipping}
+    password: ${DB_PASSWORD:shipping}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Schemat zakłada Flyway (db/migration); Hibernate tylko sprawdza zgodność encji.
+      ddl-auto: validate
+
+rynek:
+  order:
+    url: ${ORDER_SERVICE_URL:http://localhost:8091}
+  shipping:
+    # Przewoźnik za interfejsem CarrierProvider. Na razie jest tylko „sandbox” (symulator bez prawdziwych paczek);
+    # integracja z InPost / DPD / DHL / Pocztą Polską to osobna decyzja.
+    carrier: ${CARRIER_PROVIDER:sandbox}
+    # Adres, pod którym przeglądarka widzi API (gateway): strona symulatora przewoźnika.
+    public-api-url: ${PUBLIC_API_URL:http://localhost:8080/api/v1}
+    # Podpis webhooków przewoźnika (HMAC-SHA256). Wartość lokalna jest jawna celowo.
+    webhook-secret: ${SHIPPING_WEBHOOK_SECRET:rynek-sandbox-local}
+    # Ponawianie powiadomień order-service (przesyłka, statusy), gdy nie odpowiadał.
+    order-retry: 60s
+  jwt:
+    # Klucze publiczne pobierane leniwie przy pierwszym tokenie, więc serwis startuje bez działającego identity.
+    jwk-set-uri: ${IDENTITY_SERVICE_URL:http://localhost:8081}/internal/auth/jwks
+    issuer: ${JWT_ISSUER:rynek-identity}
 
 server:
   port: ${PORT:8094}

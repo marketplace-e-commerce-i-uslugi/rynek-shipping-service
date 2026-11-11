@@ -2,7 +2,7 @@
 
 Mikroserwis platformy **Rynek**: `shipping-service` — dostawa
 
-Zakres, endpointy i zdarzenia są opisane w `README.md`. Działają metody dostawy i punkty odbioru ze stałego cennika (`rates.Carriers`, bez bazy i bez przewoźnika); przesyłki, etykiety, śledzenie i webhooki zwracają 501. Nie dodawaj logiki bez wyraźnej prośby.
+Zakres, endpointy i zdarzenia są opisane w `README.md`. Działają metody dostawy i punkty odbioru ze stałego cennika (`rates.Carriers`) oraz przesyłki, etykiety PDF, śledzenie i webhooki z symulatorem przewoźnika `sandbox` (PostgreSQL + Flyway, JWT z JWKS identity). Nie dodawaj logiki bez wyraźnej prośby.
 
 ## Wspólne konwencje API (§1 dokumentu architektury)
 
@@ -24,7 +24,7 @@ Legenda kolumny **Dostęp**: `pub` = bez logowania, `user` = zalogowany, `seller
 ## Stack
 
 - Java 25, Spring Boot 4.1 (Maven, `./mvnw`)
-- Dane: PostgreSQL
+- Dane: PostgreSQL (Flyway); testy na Testcontainers
 - Zdarzenia: Kafka, nazwy `domena.zdarzenie`
 
 ## Powiązane repozytoria
@@ -35,6 +35,6 @@ Legenda kolumny **Dostęp**: `pub` = bez logowania, `user` = zalogowany, `seller
 
 ## Struktura kodu
 
-- `pl.rynek.shipping.api`: kontrolery REST (pełne ścieżki w adnotacjach), `api.dto`: rekordy żądań, `common.NotImplemented`: odpowiedź 501
+- `pl.rynek.shipping.api`: kontrolery REST (pełne ścieżki w adnotacjach), strona symulatora; `api.dto`: rekordy żądań i odpowiedzi; `rates`: cennik i paczkomaty; `shipments`: przesyłka, statusy, przewoźnicy, synchronizacja z order-service; `carrier`: `CarrierProvider`, `SandboxCarrier`, etykieta PDF, podpis webhooków; `clients`: klient order-service; `config`: security, błędy RFC 7807 po polsku
 - Konfiguracja: `src/main/resources/application.yml`
 - Port lokalny: 8094

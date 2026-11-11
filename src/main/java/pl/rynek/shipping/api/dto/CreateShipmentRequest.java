@@ -1,7 +1,11 @@
 package pl.rynek.shipping.api.dto;
 
-/**
- * Ciało żądania: Utworzenie przesyłki i etykiety. Pola do uzupełnienia razem z kontraktem w rynek-contracts.
- */
-public record CreateShipmentRequest() {
+import java.util.UUID;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+/** Kształt z rynek-frontend: {@code {orderId, carrier}}, gdzie {@code carrier} to „InPost”, „DPD”, „DHL” albo „Poczta Polska”. */
+public record CreateShipmentRequest(@NotNull(message = "Podaj zamówienie.") UUID orderId,
+                                    @NotBlank(message = "Wybierz przewoźnika.") String carrier) {
 }
