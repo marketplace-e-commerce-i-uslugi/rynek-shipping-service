@@ -26,6 +26,7 @@ Ekrany: 4 Karta oferty (koszt dostawy), 8 Koszyk. Integracje z przewoźnikami (n
 | GET | `/api/v1/shipping/pickup-points?lat=&lng=&city=` | Punkty odbioru (paczkomaty) | pub |
 | GET | `/internal/shipping/methods/{methodId}` | Metoda i cena (koszyk, zamówienie) | int |
 | GET | `/internal/shipping/pickup-points/{pointId}` | Dane punktu do zapisania w zamówieniu | int |
+| POST | `/internal/orders/{orderId}/cancelled` | Anulowanie przesyłki zamówienia anulowanego (204, idempotentne) | int |
 | POST | `/api/v1/shipping/shipments` | Utworzenie przesyłki i etykiety | seller |
 | GET | `/api/v1/shipping/shipments/{shipmentId}/label` | Etykieta do wydruku | seller |
 | GET | `/api/v1/shipping/shipments/{shipmentId}/tracking` | Śledzenie przesyłki | user / seller |
@@ -36,6 +37,7 @@ Ekrany: 4 Karta oferty (koszt dostawy), 8 Koszyk. Integracje z przewoźnikami (n
 
 - `POST /shipments {orderId, carrier}`: `carrier` to „InPost”, „DPD”, „DHL” albo „Poczta Polska”. Etykietę tworzy sprzedawca zamówienia (inny dostaje 404), tylko dla zamówienia „Do wysłania” (409 dla nieopłaconego, anulowanego i wysłanego). Paczkomat: tylko InPost (422). Odbiór osobisty nie ma przesyłki (422). Odbiorca (adres albo paczkomat) jest kopią z zamówienia.
 - Jedna przesyłka na zamówienie. Ponowienie z tym samym przewoźnikiem zwraca tę samą przesyłkę, a inny przewoźnik daje 409. Odpowiedź: `{id, carrier, trackingNumber, orderId, status, createdAt, simulatorUrl}`.
+- Anulowanie zamówienia: `POST /internal/orders/{orderId}/cancelled` (order-service zamiast zdarzenia `order.cancelled`, z ponawianiem). Przesyłka z samą etykietą (status „Etykieta utworzona”) dostaje status „Anulowana” (dopisany do śledzenia, etykieta PDF zwraca wtedy 409, a webhook i symulator jej nie ruszają). Odebrana, w drodze albo doręczona zostaje bez zmian, a brak przesyłki to też 204. Idempotentne.
 - Po utworzeniu numer przesyłki trafia do zamówienia (`PUT /internal/orders/{id}/shipment` w order-service), a status zamówienia się nie zmienia.
 - `GET /shipments/{id}/label`: PDF A6 (tylko sprzedawca), `etykieta-<numer zamówienia>.pdf`. Etykieta symulatora jest bez polskich znaków, bo standardowa czcionka PDF ich nie ma, i bez kodu kreskowego. Prawdziwy przewoźnik zwraca własną etykietę.
 - `GET /shipments/{id}/tracking`: statusy od najstarszego, dla kupującego i sprzedawcy (`{at, status, location}`). Statusy: Etykieta utworzona → Odebrana od nadawcy → W sortowni → Wydana do doręczenia (kurier) albo Czeka w paczkomacie (paczkomat) → Doręczona.

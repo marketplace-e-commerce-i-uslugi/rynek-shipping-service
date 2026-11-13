@@ -48,7 +48,9 @@ public class SandboxController {
                 .map(e -> "<li><b>" + e.status().label() + "</b><span>" + TIME.format(e.at())
                         + (e.location() == null ? "" : " · " + HtmlUtils.htmlEscape(e.location())) + "</span></li>")
                 .collect(Collectors.joining());
-        String action = s.getStatus() == ShipmentStatus.DELIVERED
+        String action = s.getStatus() == ShipmentStatus.CANCELLED
+                ? "<p>Przesyłka została anulowana razem z zamówieniem.</p>"
+                : s.getStatus() == ShipmentStatus.DELIVERED
                 ? "<p>Przesyłka jest doręczona.</p>"
                 : "<form method=\"post\"><button class=\"pay\">Następny status: " + ShipmentService.nextStatus(s).label() + "</button></form>";
         return """

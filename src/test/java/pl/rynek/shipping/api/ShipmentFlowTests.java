@@ -221,6 +221,43 @@ class ShipmentFlowTests {
         sent.verify(orders).carrierStatus(order, "PICKED_UP");
     }
 
+    @Test
+    void cancelledOrderCancelsShipmentWithLabelOnly() throws Exception {
+        UUID buyer = UUID.randomUUID();
+        UUID seller = UUID.randomUUID();
+        UUID order = order(buyer, seller, "TO_SHIP", "courier", null);
+        String id = JsonPath.read(create(seller, order, "DPD").andReturn().getResponse().getContentAsString(), "$.id");
+        String number = repository.findById(UUID.fromString(id)).orElseThrow().getTrackingNumber();
+
+        mvc.perform(post("/internal/orders/" + order + "/cancelled")).andExpect(status().isNoContent());
+        // Idempotentne.
+        mvc.perform(post("/internal/orders/" + order + "/cancelled")).andExpect(status().isNoContent());
+        tracking(buyer, id).andExpect(jsonPath("$[*].status", contains("Etykieta utworzona", "Anulowana")));
+        mvc.perform(get("/api/v1/shipping/shipments/" + id + "/label").header(HttpHeaders.AUTHORIZATION, bearer(seller)))
+                .andExpect(status().isConflict());
+        // Przesyłka anulowana nie przechodzi dalej: ani webhookiem, ani symulatorem.
+        String late = "{\"trackingNumber\":\"" + number + "\",\"status\":\"PICKED_UP\"}";
+        webhook(late, signature.sign(late)).andExpect(status().isNoContent());
+        mvc.perform(post("/api/v1/shipping/sandbox/" + id)).andExpect(status().isSeeOther());
+        tracking(seller, id).andExpect(jsonPath("$", hasSize(2)));
+        mvc.perform(get("/api/v1/shipping/sandbox/" + id)).andExpect(content().string(containsString("anulowana")));
+        verify(orders, never()).carrierStatus(any(), anyString());
+
+        // Brak przesyłki: też 204.
+        mvc.perform(post("/internal/orders/" + UUID.randomUUID() + "/cancelled")).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shipmentAlreadyPickedUpIsNotCancelled() throws Exception {
+        UUID seller = UUID.randomUUID();
+        UUID order = order(UUID.randomUUID(), seller, "TO_SHIP", "courier", null);
+        String id = JsonPath.read(create(seller, order, "DHL").andReturn().getResponse().getContentAsString(), "$.id");
+        service.sandboxNext(UUID.fromString(id));
+
+        mvc.perform(post("/internal/orders/" + order + "/cancelled")).andExpect(status().isNoContent());
+        tracking(seller, id).andExpect(jsonPath("$[*].status", contains("Etykieta utworzona", "Odebrana od nadawcy")));
+    }
+
     private UUID order(UUID buyer, UUID seller, String status, String method, String pointId) {
         UUID id = UUID.randomUUID();
         known.put(id, new OrderInfo(id, "#1001", buyer, seller, status,

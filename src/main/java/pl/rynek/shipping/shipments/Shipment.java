@@ -131,6 +131,21 @@ public class Shipment {
         return true;
     }
 
+    /**
+     * Zamówienie anulowane: przesyłka z samą etykietą zostaje anulowana. Odebrana, w drodze albo doręczona nie zmienia
+     * się (zwraca {@code false}); anulowana już jest, więc ponowienie też nic nie zmienia.
+     */
+    boolean cancel(Instant now) {
+        if (status != ShipmentStatus.CREATED) {
+            return false;
+        }
+        status = ShipmentStatus.CANCELLED;
+        orderStatus = null;
+        updatedAt = now;
+        events.add(new TrackingEvent(ShipmentStatus.CANCELLED, null, now));
+        return true;
+    }
+
     void orderAttached() {
         orderAttached = true;
     }

@@ -89,9 +89,26 @@ public class ShipmentService {
         return syncOrder(shipment.getId());
     }
 
+    /**
+     * Zamówienie anulowane (order-service, zamiast zdarzenia {@code order.cancelled}): anuluje przesyłkę, jeśli paczka
+     * nie została jeszcze odebrana. Brak przesyłki albo przesyłka w drodze/doręczona: bez zmian. Idempotentne.
+     */
+    public Optional<Shipment> orderCancelled(UUID orderId) {
+        Optional<Shipment> existing = shipments.findByOrderId(orderId);
+        if (existing.isEmpty()) {
+            return existing;
+        }
+        UUID id = existing.get().getId();
+        change(id, s -> s.cancel(clock.instant()));
+        return Optional.of(byId(id));
+    }
+
     /** Etykieta do wydruku: tylko sprzedawca. */
     public byte[] label(UUID sellerId, UUID shipmentId) {
         Shipment shipment = find(shipmentId, s -> s.getSellerId().equals(sellerId));
+        if (shipment.getStatus() == ShipmentStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Przesyłka została anulowana razem z zamówieniem.");
+        }
         return carrier.label(shipment);
     }
 
@@ -122,13 +139,14 @@ public class ShipmentService {
             case PICKED_UP -> ShipmentStatus.IN_TRANSIT;
             case IN_TRANSIT -> s.toPickupPoint() ? ShipmentStatus.READY_FOR_PICKUP : ShipmentStatus.OUT_FOR_DELIVERY;
             case OUT_FOR_DELIVERY, READY_FOR_PICKUP, DELIVERED -> ShipmentStatus.DELIVERED;
+            case CANCELLED -> ShipmentStatus.CANCELLED;
         };
     }
 
     /** Symulator: przesyłka przechodzi do następnego statusu. Doręczona zostaje bez zmian. */
     public Shipment sandboxNext(UUID shipmentId) {
         Shipment s = byId(shipmentId);
-        if (s.getStatus() == ShipmentStatus.DELIVERED) {
+        if (s.getStatus() == ShipmentStatus.DELIVERED || s.getStatus() == ShipmentStatus.CANCELLED) {
             return s;
         }
         ShipmentStatus next = nextStatus(s);

@@ -17,7 +17,9 @@ public enum ShipmentStatus {
     IN_TRANSIT("W sortowni", 2),
     OUT_FOR_DELIVERY("Wydana do doręczenia", 3),
     READY_FOR_PICKUP("Czeka w paczkomacie", 3),
-    DELIVERED("Doręczona", 4);
+    DELIVERED("Doręczona", 4),
+    /** Zamówienie anulowane przed odebraniem paczki. Najwyższy rank: późniejsze statusy od przewoźnika są ignorowane. */
+    CANCELLED("Anulowana", 5);
 
     private final String label;
     private final int rank;
